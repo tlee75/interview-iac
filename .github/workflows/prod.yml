@@ -10,6 +10,8 @@ jobs:
     name: Deploy Prod
     environment: prod
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
     steps:
       - uses: actions/checkout@v3
       - uses: pulumi/actions@v4.5.0
