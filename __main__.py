@@ -73,9 +73,9 @@ oci_instance = oci.core.Instance("oci_instance",
                                          create_vnic_details=oci.core.InstanceCreateVnicDetailsArgs(
                                              display_name=config.require('instance_name'),
                                              subnet_id=node_subnet.id,
+                                             private_ip=config.require('vcn_private_ip'),
                                          ),
                                          display_name=config.require('instance_name'),
-
                                          metadata={
                                              "ssh_authorized_keys": ssh_pub_key,
                                          },

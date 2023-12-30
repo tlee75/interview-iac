@@ -17,7 +17,7 @@ config:
   personal-site-iac:instance_node_operating_system_ocid: ocid1.image.oc1.phx.aaaaaaaa6dxlvblwz5msd3cqlmuy4inpytvsbjwyecpstlvak3llgyt4oqba
   personal-site-iac:instance_node_routetable_description: Route Table
   personal-site-iac:instance_node_shape: VM.Standard.E2.1.Micro
-  personal-site-iac:instance_nodesubnet_cidr: 10.0.10.0/24
+  personal-site-iac:instance_nodesubnet_cidr: 10.0.0.0/24
   personal-site-iac:instance_nodesubnet_displayname: instance_node_subnet
   personal-site-iac:internetgateway_name: instance_internetgateway
   personal-site-iac:oci_agent_comptinstance: ENABLED
@@ -25,5 +25,6 @@ config:
   personal-site-iac:oci_agent_customlogs: ENABLED
   personal-site-iac:oci_agent_osmgmtsvc: ENABLED
   personal-site-iac:vcn_cidr_block: 10.0.0.0/16
-  personal-site-iac:vcn_display_name: pulumi_devops_vcn
+  personal-site-iac:vcn_private_ip: 10.0.0.25
+  personal-site-iac:vcn_display_name: personal-site-vcn
   personal-site-iac:vcn_dns_label: pulumidns
