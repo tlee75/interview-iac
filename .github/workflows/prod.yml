@@ -1,12 +1,19 @@
-name: Deploy Prod
+name: Prod
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      ACTION:
+        - UPDATE
+        - DESTROY
 
 jobs:
-  deploy-prod:
+  update:
+    if: ${{ (github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'UPDATE') }}
     name: Deploy
     environment: prod
     runs-on: ubuntu-latest
@@ -20,9 +27,32 @@ jobs:
         run: |
           echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
           chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
-      - uses: pulumi/actions@v4.5.0
+      - name: Update Stack
+        uses: pulumi/actions@v4.5.0
         with:
-          command: preview
+          command: update
+          stack-name: personal-site-iac
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
+
+  deploy:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}
+    name: Deploy
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Create SSH Public Key file'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+      - name: Destroy Stack
+        uses: pulumi/actions@v4.5.0
+        with:
+          command: destroy
           stack-name: personal-site-iac
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
