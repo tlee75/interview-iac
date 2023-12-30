@@ -15,6 +15,6 @@ jobs:
       - uses: pulumi/actions@v4.5.0
         with:
           command: preview
-          stack-name: org-name/stack-name
+          stack-name: personal-site-iac
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
