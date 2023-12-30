@@ -1,0 +1,6 @@
+name: personal-site-iac
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Pulumi infra for the Personal Site website
