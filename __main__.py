@@ -44,7 +44,7 @@ node_subnet = oci.core.Subnet("node_subnet",
 get_ad_name = oci.identity.get_availability_domain(compartment_id=config.require('compartment_ocid'),ad_number=config.get('availability_domain_number'))
 
 # Read the public key from a local path
-ssh_pub_key=open(config.require('path_ssh_pubkey'),"r").read()
+ssh_pub_key=open(os.path.expanduser("~/.ssh/" + config.require('ssh_pubkey_name')),"r").read()
 
 # Create the Instance
 oci_instance = oci.core.Instance("oci_instance",

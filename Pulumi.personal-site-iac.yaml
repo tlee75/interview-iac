@@ -25,7 +25,7 @@ config:
   personal-site-iac:oci_agent_comptinstancemonitoring: ENABLED
   personal-site-iac:oci_agent_customlogs: ENABLED
   personal-site-iac:oci_agent_osmgmtsvc: ENABLED
-  personal-site-iac:path_ssh_pubkey: /home/tyler/.ssh/arm-k3s-oci.pub
+  personal-site-iac:ssh_pubkey_name: arm-k3s-oci.pub
   personal-site-iac:vcn_cidr_block: 10.0.0.0/16
   personal-site-iac:vcn_display_name: personal-site-vcn
   personal-site-iac:vcn_dns_label: pulumidns
