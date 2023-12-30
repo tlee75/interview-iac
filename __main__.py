@@ -1,78 +1,58 @@
-"""A OCI Python Pulumi program"""
-
 import pulumi
 import pulumi_oci as oci
-from pulumi import Output
 import os
 
 # Initialize pulumi config
 config = pulumi.Config()
 
 
-
+# Create Virtual Cloud Network
 vcn = oci.core.Vcn("instance_vcn",
                         cidr_blocks=[config.get('vcn_cidr_block')],
-                        compartment_id=config.get('compartment_ocid'),
+                        compartment_id=os.environ['TF_VAR_compartment_ocid'],
                         display_name=config.get('vcn_display_name'),
                         dns_label=config.get('vcn_dns_label'),
                         )
 
-test_internet_gateway = oci.core.InternetGateway("testInternetGateway",
-                                                 compartment_id=config.get('compartment_ocid'),
+# Create Internet Gateway
+oci_internet_gateway = oci.core.InternetGateway("ociInternetGateway",
+                                                 compartment_id=os.environ['TF_VAR_compartment_ocid'],
                                                  vcn_id=vcn.id,
                                                  display_name=config.get('internetgateway_name'))
 
-
-instance_node_route_table = oci.core.RouteTable("testRouteTable",
-                                                compartment_id=config.get('compartment_ocid'),
+# Create outbound routing table
+instance_node_route_table = oci.core.RouteTable("ociRouteTable",
+                                                compartment_id=os.environ['TF_VAR_compartment_ocid'],
                                                 vcn_id=vcn.id,
                                                 route_rules=[oci.core.RouteTableRouteRuleArgs(
-                                                    network_entity_id=test_internet_gateway.id,
+                                                    network_entity_id=oci_internet_gateway.id,
                                                     destination="0.0.0.0/0",
                                                     destination_type="CIDR_BLOCK",
                                                     description=config.get('instance_node_routetable_description')
                                                 )])
 
-
+# Create subnet
 node_subnet = oci.core.Subnet("node_subnet",
                               cidr_block=config.get('instance_nodesubnet_cidr'),
-                              compartment_id=config.get('compartment_ocid'),
+                              compartment_id=os.environ['TF_VAR_compartment_ocid'],
                               vcn_id=vcn.id,
                               display_name=config.get('instance_nodesubnet_displayname'),
                               route_table_id=instance_node_route_table.id,)
 
 
-get_ad_name = oci.identity.get_availability_domain(compartment_id=os.environ['TF_VAR_tenancy_ocid'],ad_number=3)
+# Fetch Availability Domain
+get_ad_name = oci.identity.get_availability_domain(compartment_id=os.environ['TF_VAR_compartment_ocid'],ad_number=config.get('availability_domain_number'))
 
-# Export the Availability Domain
-pulumi.export('get_ad_name', get_ad_name.__dict__['name'])
-
+# Read the public key from a local path
 ssh_pub_key=open(config.require('path_ssh_pubkey'),"r").read()
-node_image = oci.core.get_images(compartment_id=config.get('compartment_ocid'),
-                                 operating_system=config.get('instance_node_operating_system'),
-                                 operating_system_version=config.get('instance_operating_system_version'),
-                                 shape=config.get('instance_node_shape'),
-                                 sort_by="TIMECREATED",
-                                 sort_order="DESC")
 
-instance_oraclelinux = oci.core.Instance("instance_oraclelinux",
+# Create the Instance
+oci_instance = oci.core.Instance("oci_instance",
                                          agent_config=oci.core.InstanceAgentConfigArgs(
                                              plugins_configs=[
                                                  oci.core.InstanceAgentConfigPluginsConfigArgs(
-                                                     desired_state=config.require('oci_agent_vulnerability'),
-                                                     name="Vulnerability Scanning",
-                                                 ),
-                                                 oci.core.InstanceAgentConfigPluginsConfigArgs(
-                                                     desired_state=config.require('oci_agent_javamgmtsvc'),
-                                                     name="Oracle Java Management Service",
-                                                 ),
-                                                 oci.core.InstanceAgentConfigPluginsConfigArgs(
                                                      desired_state=config.require('oci_agent_osmgmtsvc'),
                                                      name="OS Management Service Agent",
-                                                 ),
-                                                 oci.core.InstanceAgentConfigPluginsConfigArgs(
-                                                     desired_state=config.require('oci_agent_mgmt'),
-                                                     name="Management Agent",
                                                  ),
                                                  oci.core.InstanceAgentConfigPluginsConfigArgs(
                                                      desired_state=config.require('oci_agent_customlogs'),
@@ -86,24 +66,15 @@ instance_oraclelinux = oci.core.Instance("instance_oraclelinux",
                                                      desired_state=config.require('oci_agent_comptinstancemonitoring'),
                                                      name="Compute Instance Monitoring",
                                                  ),
-                                                 oci.core.InstanceAgentConfigPluginsConfigArgs(
-                                                     desired_state=config.require('oci_agent_blkvolume'),
-                                                     name="Block Volume Management",
-                                                 ),
-                                                 oci.core.InstanceAgentConfigPluginsConfigArgs(
-                                                     desired_state=config.require('oci_agent_bastion'),
-                                                     name="Bastion",
-                                                 ),
                                              ],
                                          ),
                                          availability_domain=get_ad_name.__dict__['name'],
-                                         compartment_id=config.get('compartment_ocid'),
+                                         compartment_id=os.environ['TF_VAR_compartment_ocid'],
                                          create_vnic_details=oci.core.InstanceCreateVnicDetailsArgs(
                                              display_name=config.require('instance_name'),
                                              subnet_id=node_subnet.id,
                                          ),
                                          display_name=config.require('instance_name'),
-                                         fault_domain="FAULT-DOMAIN-3",
 
                                          metadata={
                                              "ssh_authorized_keys": ssh_pub_key,
@@ -115,6 +86,9 @@ instance_oraclelinux = oci.core.Instance("instance_oraclelinux",
                                          ),
                                          source_details=oci.core.InstanceSourceDetailsArgs(
                                              boot_volume_size_in_gbs=config.require('instance_bootvolume_size_gb'),
-                                             source_id=node_image.images[0]['id'],
+                                             source_id=config.require('instance_node_operating_system_ocid'),
                                              source_type="image",
                                          ),)
+
+pulumi.export("Instance Hostname" ,oci_instance.display_name)
+pulumi.export("Instance PublicIP" ,oci_instance.public_ip)

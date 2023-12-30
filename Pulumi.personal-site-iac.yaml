@@ -8,39 +8,22 @@ config:
     secure: AAABAHJN+EEf/tqOQsOgj6zTwROdD6DTYC/JJK+cof9xXE/ulqnfI8jrebR1uxX6CS1SuPefSfbvR3npkTpJDEv/noDdlGTXMTmGJ/yDYpKqxpya2eyU8V6meSNp5qEEBtKHQrMf0WZGz/dfD/Pc
   oci:userOcid:
     secure: AAABAPDwkad8s67YB1hQkh5QSywXlSstFT0SGIsSneOahJAGpY4juJ6bLpKl6n7jqqkJx5sVhvG5u2isKbp5gyHVTN7LnruRtxmGOFWXZG0/Ke9V7UNYAWsEMPEubcmaNWBUartrxCZzwIk7
-  personal-site-iac:app_name_prefix: pulumi_instance
-  personal-site-iac:compartment_ocid: ocid1.compartment.oc1..aaaaaaaaq5o3zzev2bli7bd2rxyvgsv5nwcslqhxl3jdp4klokhyvwcpl3qa
+  personal-site-iac:instance_name: personal-site
+  personal-site-iac:path_ssh_pubkey: /home/tyler/.ssh/arm-k3s-oci.pub
+  personal-site-iac:availability_domain_number: 3
   personal-site-iac:instance_bootvolume_size_gb: "50"
-  personal-site-iac:instance_is_public_ip_enabled: "True"
-  personal-site-iac:instance_name: oci_ol_instance_pulumi
   personal-site-iac:instance_node_memory_in_gbs: "1"
   personal-site-iac:instance_node_ocpus: "1"
-  personal-site-iac:instance_node_operating_system: Oracle Linux
-  personal-site-iac:instance_node_routetable_displayname: instance_node_routetable
+  personal-site-iac:instance_node_operating_system_ocid: ocid1.image.oc1.phx.aaaaaaaa6dxlvblwz5msd3cqlmuy4inpytvsbjwyecpstlvak3llgyt4oqba
   personal-site-iac:instance_node_routetable_description: Route Table
-  personal-site-iac:instance_node_seclist_name: instance_node_seclist
   personal-site-iac:instance_node_shape: VM.Standard.E2.1.Micro
-  personal-site-iac:instance_nodepool_name: instance_nodepool_1
   personal-site-iac:instance_nodesubnet_cidr: 10.0.10.0/24
   personal-site-iac:instance_nodesubnet_displayname: instance_node_subnet
-  personal-site-iac:instance_operating_system_version: "8"
   personal-site-iac:internetgateway_name: instance_internetgateway
-  personal-site-iac:natgateway_name: instance_natgateway
-  personal-site-iac:notification_description: oci_pulumi_topic
-  personal-site-iac:oci_agent_bastion: DISABLED
-  personal-site-iac:oci_agent_blkvolume: DISABLED
   personal-site-iac:oci_agent_comptinstance: ENABLED
   personal-site-iac:oci_agent_comptinstancemonitoring: ENABLED
   personal-site-iac:oci_agent_customlogs: ENABLED
-  personal-site-iac:oci_agent_javamgmtsvc: DISABLED
-  personal-site-iac:oci_agent_mgmt: DISABLED
   personal-site-iac:oci_agent_osmgmtsvc: ENABLED
-  personal-site-iac:oci_agent_vulnerability: DISABLED
-  personal-site-iac:path_ssh_pubkey: /home/tyler/.ssh/arm-k3s-oci.pub
-  personal-site-iac:policies_description: pulumi instance policies
-  personal-site-iac:servicegateway_name: instance_servicegateway
-  personal-site-iac:usergroup_description: pulumi user group
-  personal-site-iac:usergroup_name: pulumi_instance_ugrp
   personal-site-iac:vcn_cidr_block: 10.0.0.0/16
   personal-site-iac:vcn_display_name: pulumi_devops_vcn
   personal-site-iac:vcn_dns_label: pulumidns
