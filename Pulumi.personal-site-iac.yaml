@@ -8,10 +8,11 @@ config:
     secure: AAABAHJN+EEf/tqOQsOgj6zTwROdD6DTYC/JJK+cof9xXE/ulqnfI8jrebR1uxX6CS1SuPefSfbvR3npkTpJDEv/noDdlGTXMTmGJ/yDYpKqxpya2eyU8V6meSNp5qEEBtKHQrMf0WZGz/dfD/Pc
   oci:userOcid:
     secure: AAABAPDwkad8s67YB1hQkh5QSywXlSstFT0SGIsSneOahJAGpY4juJ6bLpKl6n7jqqkJx5sVhvG5u2isKbp5gyHVTN7LnruRtxmGOFWXZG0/Ke9V7UNYAWsEMPEubcmaNWBUartrxCZzwIk7
-  personal-site-iac:instance_name: personal-site
-  personal-site-iac:path_ssh_pubkey: /home/tyler/.ssh/arm-k3s-oci.pub
-  personal-site-iac:availability_domain_number: 3
+  personal-site-iac:availability_domain_number: "3"
+  personal-site-iac:compartment_ocid:
+    secure: AAABAMrsVAFRRf1vvaE5CZsCT5aSZZDXoRsQk67n0e8EAO4VQVwpSCcRGiI3L8Bfca6LTt9LenCYC4zY2L6UuVMtGA2W/Fz0jVGzkQxoS5yiVXBiCT+WT99vpBmKCRFum0epgA9IHBTXPgGcQtE3BKsV0Q==
   personal-site-iac:instance_bootvolume_size_gb: "50"
+  personal-site-iac:instance_name: personal-site
   personal-site-iac:instance_node_memory_in_gbs: "1"
   personal-site-iac:instance_node_ocpus: "1"
   personal-site-iac:instance_node_operating_system_ocid: ocid1.image.oc1.phx.aaaaaaaa6dxlvblwz5msd3cqlmuy4inpytvsbjwyecpstlvak3llgyt4oqba
@@ -24,7 +25,8 @@ config:
   personal-site-iac:oci_agent_comptinstancemonitoring: ENABLED
   personal-site-iac:oci_agent_customlogs: ENABLED
   personal-site-iac:oci_agent_osmgmtsvc: ENABLED
+  personal-site-iac:path_ssh_pubkey: /home/tyler/.ssh/arm-k3s-oci.pub
   personal-site-iac:vcn_cidr_block: 10.0.0.0/16
-  personal-site-iac:vcn_private_ip: 10.0.0.25
   personal-site-iac:vcn_display_name: personal-site-vcn
   personal-site-iac:vcn_dns_label: pulumidns
+  personal-site-iac:vcn_private_ip: 10.0.0.25

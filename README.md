@@ -6,7 +6,8 @@ The IaC is split into separate stacks to isolate the OCI organizational resource
 computational/network resources for the website which will be brought up and down more frequently.  
 
 
-First create the compartment to be used for the compute/network infrastructure and set it as an environment variable: `TF_VAR_compartment_ocid`  
+First create the compartment to be used for the compute/network infrastructure and set add it to your pulumi config:  
+`pulumi config set --secret compartment_ocid "ocid1.compartment.oc1..aaaaaaxxxxxxxx`
 
 Adjust some of the stack configs, such as:  
 `instance_node_operating_system_ocid`  The OCID to the image to use for the instance. A list is available [here](https://docs.oracle.com/en-us/iaas/images/image/741de11a-777e-4a12-a7b3-b66ea5a13419/).   
@@ -18,4 +19,3 @@ Adjust some of the stack configs, such as:
 The Github Actions depend on a few variables. Create a `prod` Github environment and create a secret named `PULUMI_ACCESS_TOKEN`
 and store an access token from pulumi.com.
 
-Create a Github Variable named `TF_VAR_COMPARTMENT_OCID` and insert the compartment ID where the resources will be deployed.  
