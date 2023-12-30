@@ -1,0 +1,18 @@
+name: Prod
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy-prod:
+    name: Deploy Prod
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pulumi/actions@v4.5.0
+        with:
+          command: preview
+          stack-name: org-name/stack-name
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
