@@ -1,13 +1,19 @@
 name: Prod
+
 on:
   pull_request:
     types:
       - closed
     branches:
       - main
+
   workflow_dispatch:
     inputs:
       ACTION:
+        description: "Select Action"
+        type: choice
+        default: UPDATE
+        options:
         - UPDATE
         - DESTROY
 
