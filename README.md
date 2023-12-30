@@ -18,3 +18,4 @@ Adjust some of the stack configs, such as:
 The Github Actions depend on a few variables. Create a `prod` Github environment and create a secret named `PULUMI_ACCESS_TOKEN`
 and store an access token from pulumi.com.
 
+Create a Github Variable named `TF_VAR_COMPARTMENT_OCID` and insert the compartment ID where the resources will be deployed.  
