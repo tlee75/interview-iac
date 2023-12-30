@@ -90,5 +90,5 @@ oci_instance = oci.core.Instance("oci_instance",
                                              source_type="image",
                                          ),)
 
-pulumi.export("Instance Hostname" ,oci_instance.display_name)
-pulumi.export("Instance PublicIP" ,oci_instance.public_ip)
+pulumi.export("instance_hostname" ,oci_instance.display_name)
+pulumi.export("instance_pubip" ,oci_instance.public_ip)

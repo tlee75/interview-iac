@@ -1,0 +1,13 @@
+---
+- name: Configure Personal Site Instance
+  gather_facts: no
+  tasks:
+    - name: Install Cloudflared
+      ansible.builtin.shell: curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared.deb
+      register: install_cloudflared
+    - debug: msg="{{ install_cloudflared.stdout_lines }}"
+
+    - name: Configure Tunnel
+      ansible.builtin.shell: sudo cloudflared service install {{ CF_TUNNEL_JSON_ENCODED }}
+      register: configure_cloudflared
+    - debug: msg="{{ configure_cloudflared.stdout_lines }}"

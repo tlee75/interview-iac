@@ -17,7 +17,7 @@ cat "~/.oci/oci_api_key.pem" | pulumi config set oci:privateKey --secret
 ```
 
 Next create the compartment to be used for the compute/network infrastructure and set add it to your pulumi config:  
-`pulumi config set --secret compartment_ocid "ocid1.compartment.oc1..aaaaaaxxxxxxxx`
+`pulumi config set --secret compartment_ocid "ocid1.compartment.oc1..<unique_ID>`
 
 Adjust some of the stack configs, such as:  
 `instance_node_operating_system_ocid`  The OCID to the image to use for the instance. A list is available [here](https://docs.oracle.com/en-us/iaas/images/image/741de11a-777e-4a12-a7b3-b66ea5a13419/).

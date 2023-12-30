@@ -34,6 +34,7 @@ jobs:
           echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
           chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
       - name: Update Stack
+        id: pulumi
         uses: pulumi/actions@v4.5.0
         with:
           command: update
@@ -41,6 +42,37 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
+    outputs:
+      INSTANCE_PUBIP: ${{ steps.output.pulumi.instance_pubip }}
+
+  configure:
+    name: Update
+    needs: [ update ]
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Add .ssh directory'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+      - name: 'Copy private key'
+        run: |
+          echo "${{ vars.SSH_PRIVATE_KEY }}" > ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
+      - name: Install Ansible
+        run: |
+          sudo apt update -y
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository --yes --update ppa:ansible/ansible
+          sudo apt install ansible -y
+      - name: Deploy
+        run: |
+          ansible-playbook ./ansible/playbooks/configure.yml \
+            --inventory ${{ needs.update.outputs.INSTANCE_PUBIP }} \
+            --key-file ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }} \
+            --verbose \
+            --extra-vars "CF_TUNNEL_JSON_ENCODED=${{ secrets.CF_TUNNEL_JSON_ENCODED }}"
 
   destroy:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}
