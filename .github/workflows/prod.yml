@@ -43,7 +43,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
     outputs:
-      INSTANCE_PUBIP: ${{ steps.output.pulumi.instance_pubip }}
+      INSTANCE_PUBIP: ${{ steps.pulumi.outputs.instance_pubip }}
 
   configure:
     name: Configure Instance
@@ -89,7 +89,7 @@ jobs:
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
             --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
             "config_src": "cloudflare",
-            "name": "${{ inputs.TUNNEL_NAME }}",
+            "name": "${{ vars.TUNNEL_NAME }}",
             "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
           TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
           TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
