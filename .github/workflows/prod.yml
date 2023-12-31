@@ -46,7 +46,7 @@ jobs:
       INSTANCE_PUBIP: ${{ steps.output.pulumi.instance_pubip }}
 
   configure:
-    name: Update
+    name: Configure Instance
     needs: [ update ]
     environment: prod
     runs-on: ubuntu-latest
@@ -69,10 +69,48 @@ jobs:
       - name: Deploy
         run: |
           ansible-playbook ./ansible/playbooks/configure.yml \
-            --inventory ${{ needs.update.outputs.INSTANCE_PUBIP }} \
+            --inventory ${{ needs.update.outputs.INSTANCE_PUBIP }}, \
+            --user ${{ secrets.SSH_USERNAME }} \
             --key-file ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }} \
             --verbose \
             --extra-vars "CF_TUNNEL_JSON_ENCODED=${{ secrets.CF_TUNNEL_JSON_ENCODED }}"
+
+  records:
+    name: Create Cloudflare Tunnel and DNS Records
+    needs: [ update ]
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Cloudflare Tunnel
+        id: create_tunnel
+        run: |
+          TUNNEL_RESP=$(curl -X POST --url https://api.cloudflare.com/client/v4/accounts${{ secrets.CF_ACCOUNT_ID }}/cfd_tunnel \
+            --header 'Content-Type: application/json' \
+            --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
+            "config_src": "cloudflare",
+            "name": "${{ inputs.TUNNEL_NAME }}",
+            "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
+          TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+          TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
+          echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+      - name: Create Cloudflare DNS Records
+        run: |
+          DNS_RESP=$(curl -X POST --url https://api.cloudflare.com/client/v4/zones/${{ vars.CF_ZONE_ID }}/dns-records \
+            --header 'Content-Type: application/json' \
+            --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
+            "content": "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com",
+            "name": "${{ vars.SSH_RECORD_NAME }}",
+            "proxied": false,
+            "type": "CNAME",
+            "ttl": 3600}')
+          OUTCOME=$(echo $RESP | jq -r '.success')
+          echo $RESP
+          if [ "$OUTCOME" != 'true' ]; then
+            echo "ERROR while creating DNS record"
+            exit 1
+          fi
 
   destroy:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}

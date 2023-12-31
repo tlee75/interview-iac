@@ -30,3 +30,33 @@ and store an access token from pulumi.com.
 
 Create a Github Variable named `SSH_PUBLIC_KEY` and `SSH_PUBLIC_KEY_NAME` and insert the SSH public key and the name of 
 the public key which matches what you placed in the stack config as `ssh_pubkey_name`.  
+
+
+# Cloudflare
+
+Github Environment:
+
+Required Environment Variables:  
+`CF_ZONE_ID` Containing the Zone ID from your Cloudflare Site
+`SSH_RECORD_NAME` The SSH DNS record that will be pointed at CF Tunnel
+
+Required Environment Secrets:  
+`CF_TUNNEL_SECRET` A random secret which has been base64 encoded and will be used to create the Cloudflare Tunnel. 
+
+Required Repository Secrets:  
+`CF_API_KEY`  Cloudflare Account's Global API Key  
+`CF_API_USER`  Cloudflare Account's Email Address  
+
+
+# To run Instance Configuration playbook locally:
+
+Ensure the public IP address has a trailing comma:  
+
+```shell
+ansible-playbook ./ansible/playbooks/configure.yml \
+--inventory <public_ip>, \
+--user <SSH_USERNAME> \
+--key-file ~/.ssh/<SSH_PRIVATE_KEY_NAME> \
+--verbose \
+--extra-vars "CF_TUNNEL_JSON_ENCODED=<CF_TUNNEL_JSON_ENCODED>"
+```
