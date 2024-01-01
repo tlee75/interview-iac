@@ -89,7 +89,7 @@ jobs:
                 exit 1
               else
                 echo "INFO: Tunnel created successfully ${RESP_MESSAGES}"
-                TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
+                TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result.id')
                 echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
               fi
             fi
@@ -107,7 +107,7 @@ jobs:
           RECORD_TYPE: CNAME
           PROXIED: true
     outputs:
-      TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
+      CF_TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
 
   configure:
     name: Configure Instance
@@ -138,7 +138,7 @@ jobs:
             --key-file ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }} \
             --verbose \
             --extra-vars "CF_ACCOUNT_ID=${{ vars.CF_ACCOUNT_ID }} \
-            --extra-vars "CF_TUNNEL_ID=${{ needs.records.outputs.TUNNEL_ID }} \
+            --extra-vars "CF_TUNNEL_ID=${{ needs.records.outputs.CF_TUNNEL_ID }} \
             --extra-vars "CF_TUNNEL_SECRET=${{ secrets.CF_TUNNEL_SECRET }}" \
             --extra-vars "SITE_URL=${{ vars.SITE_URL }}"
 
