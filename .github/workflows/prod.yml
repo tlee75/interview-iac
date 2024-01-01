@@ -84,15 +84,12 @@ jobs:
             fi
           else
             echo "INFO: Tunnel already exists..."
-            BUCKET_NAME=testbucket
-            OBJECT_NAME=testworkflow-2.0.1.jar
-            TARGET_LOCATION=/opt/test/testworkflow-2.0.1.jar
 
             ENCODED_JSON_STRING=$( jq -n \
             --arg AID "${{ vars.CF_ACCOUNT_ID }}" \
             --arg TID "$CF_TUNNEL_ID" \
             --arg TS "${{ secrets.CF_TUNNEL_SECRET }}" \
-            '{a:$AID,t:$TID,s:$TS}' | base64 )
+            '{a:$AID,t:$TID,s:$TS} | @base64')
 
             echo "TUNNEL_TOKEN=${ENCODED_JSON_STRING}" >> $GITHUB_OUTPUT
           fi
