@@ -58,11 +58,10 @@ jobs:
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
             --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}')
-
-          TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
-          CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result.id')
-          echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
           echo "${TUNNEL_RESP}"
+          TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+          CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
+          echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
 
           if [ "$TUNNEL_OUTCOME" != 'true' ]; then
             echo "INFO: Tunnel does not exist, creating..."
@@ -73,10 +72,10 @@ jobs:
               "config_src": "cloudflare",
               "name": "${{ vars.TUNNEL_NAME }}",
               "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
-            TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
-            TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result[].id')
-            echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
             echo "${TUNNEL_RESP}"
+            TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+            TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
+            echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
             if [ "$TUNNEL_OUTCOME" != 'true' ]; then
               echo "ERROR while creating DNS record"
               exit 1
@@ -108,8 +107,8 @@ jobs:
             "proxied": false,
             "type": "CNAME",
             "ttl": 3600}')
-          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
           echo $DNS_RESP
+          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
           if [ "$DNS_OUTCOME" != 'true' ]; then
             echo "ERROR while creating DNS record"
             exit 1
