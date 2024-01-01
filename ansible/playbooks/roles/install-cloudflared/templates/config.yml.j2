@@ -1,5 +1,5 @@
 tunnel: {{ CF_TUNNEL_ID }}
-credentials-file: /home/{{ ansible_user }}/.cloudflared/{{ CF_TUNNEL_ID }}.json
+credentials-file: /root/.cloudflared/{{ CF_TUNNEL_ID }}.json
 
 ingress:
   - hostname: {{ SITE_URL }}
