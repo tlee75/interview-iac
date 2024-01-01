@@ -137,7 +137,7 @@ jobs:
             --extra-vars "CF_ACCOUNT_ID=${{ vars.CF_ACCOUNT_ID }} \
             --extra-vars "CF_TUNNEL_ID=${{ needs.records.outputs.TUNNEL_ID }} \
             --extra-vars "CF_TUNNEL_SECRET=${{ secrets.CF_TUNNEL_SECRET }}" \
-            --extra-vars "SITE_URL=${{ vars.SITE_URL }}
+            --extra-vars "SITE_URL=${{ vars.SITE_URL }}"
 
   destroy:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}
