@@ -85,8 +85,9 @@ jobs:
             fi
           else
             echo "INFO: Tunnel already exists ${RESP_MESSAGES}"
-            CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
-            echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
+            TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
+            echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+            echo ${CF_TUNNEL_ID}
           fi
       - name: Create Cloudflare DNS Records
         run: |
