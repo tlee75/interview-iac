@@ -2,10 +2,10 @@
 - name: Create directory to put files into
   become: true
   ansible.builtin.file:
-    path: '/root/.cloudflared/'
+    path: '/etc/cloudflared/'
     state: directory
-    owner: '{{ ansible_user }}'
-    group: '{{ ansible_user }}'
+    owner: 'root'
+    group: 'root'
     mode: '0755'
 
 - name: Setup Cloudflare GPG Key
@@ -33,7 +33,7 @@
   become: true
   ansible.builtin.template:
     src: config.yml.j2
-    dest: '/root/.cloudflared/config.yml'
+    dest: '/etc/cloudflared/config.yml'
     owner: 'root'
     group: 'root'
     mode: '0644'
@@ -43,7 +43,7 @@
   become: true
   ansible.builtin.template:
     src: creds.json.j2
-    dest: '/root/.cloudflared/{{ CF_TUNNEL_ID }}.json'
+    dest: '/etc/cloudflared/{{ CF_TUNNEL_ID }}.json'
     owner: 'root'
     group: 'root'
     mode: '0644'
