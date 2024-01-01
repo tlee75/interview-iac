@@ -37,6 +37,6 @@
     force: yes
 
 - name: Configure Tunnel
-  ansible.builtin.shell: cloudflared service install
+  ansible.builtin.shell: sudo -i -u {{ ansible_user }} cloudflared service install
   register: configure_cloudflared
 - debug: msg="{{ configure_cloudflared.stdout_lines }}"
