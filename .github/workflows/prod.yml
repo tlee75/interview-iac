@@ -93,6 +93,7 @@ jobs:
       - name: Create Cloudflare DNS Records
         continue-on-error: true
         run: |
+          set -x
           DNS_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/zones/${{ vars.CF_ZONE_ID }}/dns_records" \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
