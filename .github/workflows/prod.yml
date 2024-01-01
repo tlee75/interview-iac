@@ -105,7 +105,7 @@ jobs:
             "ttl": 3600}')
           DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
           DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
-          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.success[]')
+          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.messages[]')
           if [ "$DNS_OUTCOME" != 'true' ]; then
             ERROR_CODE=$(echo ${DNS_ERRORS} | jq -r '.[] | .code')
             if [ "${ERROR_CODE}" == 81053 ]; then
