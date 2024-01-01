@@ -58,7 +58,7 @@ jobs:
           chmod 0700 ~/.ssh
       - name: 'Copy private key'
         run: |
-          echo "${{ vars.SSH_PRIVATE_KEY }}" > ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
           chmod 0400 ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
       - name: Install Ansible
         run: |
