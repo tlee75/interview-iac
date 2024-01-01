@@ -76,7 +76,7 @@ jobs:
             --extra-vars "CF_TUNNEL_JSON_ENCODED=${{ secrets.CF_TUNNEL_JSON_ENCODED }}"
 
   records:
-    name: Create Cloudflare Tunnel and DNS Records
+    name: Create Tunnel and DNS
     needs: [ update ]
     environment: prod
     runs-on: ubuntu-latest
@@ -94,6 +94,11 @@ jobs:
           TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
           TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
           echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+          echo "${TUNNEL_RESP}"
+          if [ "$OUTCOME" != 'true' ]; then
+            echo "ERROR while creating DNS record"
+            exit 1
+          fi
       - name: Create Cloudflare DNS Records
         run: |
           DNS_RESP=$(curl -X POST --url https://api.cloudflare.com/client/v4/zones/${{ vars.CF_ZONE_ID }}/dns-records \

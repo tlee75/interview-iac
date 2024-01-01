@@ -2,6 +2,8 @@
 - name: Configure Personal Site Instance
   gather_facts: no
   hosts: all
+  vars:
+    ansible_host_key_checking: false
   tasks:
     - name: Install Cloudflared
       ansible.builtin.shell: curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared.deb

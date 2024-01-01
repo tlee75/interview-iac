@@ -39,7 +39,7 @@ Github Environment:
 Required Environment Variables:  
 `CF_ZONE_ID` Containing the Zone ID from your Cloudflare Site  
 `SSH_RECORD_NAME` The SSH DNS record that will be pointed at CF Tunnel  
-'TUNNEL_NAME' The display name for the cloudflare tunnel  
+`TUNNEL_NAME` The display name for the cloudflare tunnel  
 
 Required Environment Secrets:  
 `CF_TUNNEL_SECRET` A random secret which has been base64 encoded and will be used to create the Cloudflare Tunnel. 
