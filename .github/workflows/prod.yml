@@ -69,7 +69,7 @@ jobs:
             exit 1
           else
             TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
-            if [ -n "${TUNNEL_ID} ]; then
+            if [ -n "${TUNNEL_ID}" ]; then
               echo "INFO: Tunnel already exists ${RESP_MESSAGES}"
               echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
             else
