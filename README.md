@@ -25,20 +25,19 @@ Adjust some of the stack configs, such as:
 `ssh_pubkey_name`  Name of the SSH public key relative to the `~/.ssh/` directory that will be uploaded to the instance. 
 
 
+# Github Environment:
+
 The Github Actions depend on a few variables. Create a `prod` Github environment and create a secret named `PULUMI_ACCESS_TOKEN`
 and store an access token from pulumi.com.
 
 Create a Github Variable named `SSH_PUBLIC_KEY` and `SSH_PUBLIC_KEY_NAME` and insert the SSH public key and the name of 
-the public key which matches what you placed in the stack config as `ssh_pubkey_name`.  
-
-
-# Cloudflare
-
-Github Environment:
+the public key which matches what you placed in the stack config as `ssh_pubkey_name`.
 
 Required Environment Variables:  
-`CF_ZONE_ID` Containing the Zone ID from your Cloudflare Site  
-`SSH_RECORD_NAME` The SSH DNS record that will be pointed at CF Tunnel  
+`SSH_PUBLIC_KEY`  SSH public key to be installed into the instance when ran from Github Actions  
+`SSH_PUBLIC_KEY_NAME`  File name of the SSH public key for pulumi to look for  
+`CF_ZONE_ID` Zone ID from your Cloudflare Site  
+`SSH_RECORD_NAME` The SSH DNS record that will be pointed at CF Tunnel -- e.g. `ssh.mysite.com`  
 `TUNNEL_NAME` The display name for the cloudflare tunnel  
 
 Required Environment Secrets:  
