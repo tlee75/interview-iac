@@ -54,23 +54,48 @@ jobs:
       - name: Create Cloudflare Tunnel
         id: create_tunnel
         run: |
-          TUNNEL_RESP=$(curl -X POST --url https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel \
+          TUNNEL_RESP=$(curl -X GET --url https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.TUNNEL_NAME }} \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
-            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
-            "config_src": "cloudflare",
-            "name": "${{ vars.TUNNEL_NAME }}",
-            "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
+            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}')
+
           TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
-          TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
-          TUNNEL_TOKEN=$(echo ${TUNNEL_JSON} | jq -r '.token')
-          echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+          CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result.id')
+          echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
           echo "${TUNNEL_RESP}"
+
           if [ "$TUNNEL_OUTCOME" != 'true' ]; then
-            echo "ERROR while creating DNS record"
-            exit 1
+            echo "INFO: Tunnel does not exist, creating..."
+            TUNNEL_RESP=$(curl -X POST --url https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel \
+              --header 'Content-Type: application/json' \
+              --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+              --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
+              "config_src": "cloudflare",
+              "name": "${{ vars.TUNNEL_NAME }}",
+              "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
+            TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+            TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result[].id')
+            echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+            echo "${TUNNEL_RESP}"
+            if [ "$TUNNEL_OUTCOME" != 'true' ]; then
+              echo "ERROR while creating DNS record"
+              exit 1
+            else
+              echo "TUNNEL_TOKEN=${TUNNEL_TOKEN}" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "TUNNEL_TOKEN=${TUNNEL_TOKEN}" >> $GITHUB_OUTPUT
+            echo "INFO: Tunnel already exists..."
+            BUCKET_NAME=testbucket
+            OBJECT_NAME=testworkflow-2.0.1.jar
+            TARGET_LOCATION=/opt/test/testworkflow-2.0.1.jar
+
+            ENCODED_JSON_STRING=$( jq -n \
+            --arg AID "${{ vars.CF_ACCOUNT_ID }}" \
+            --arg TID "$CF_TUNNEL_ID" \
+            --arg TS "${{ secrets.CF_TUNNEL_SECRET }}" \
+            '{a:$AID,t:$TID,s:$TS}' | base64 )
+
+            echo "TUNNEL_TOKEN=${ENCODED_JSON_STRING}" >> $GITHUB_OUTPUT
           fi
       - name: Create Cloudflare DNS Records
         run: |
