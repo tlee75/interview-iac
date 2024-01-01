@@ -95,7 +95,7 @@ jobs:
           TUNNEL_ID=$(echo ${TUNNEL_JSON} | jq -r '.result.id')
           echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
           echo "${TUNNEL_RESP}"
-          if [ "$OUTCOME" != 'true' ]; then
+          if [ "$TUNNEL_OUTCOME" != 'true' ]; then
             echo "ERROR while creating DNS record"
             exit 1
           fi
@@ -110,9 +110,9 @@ jobs:
             "proxied": false,
             "type": "CNAME",
             "ttl": 3600}')
-          OUTCOME=$(echo $RESP | jq -r '.success')
-          echo $RESP
-          if [ "$OUTCOME" != 'true' ]; then
+          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
+          echo $DNS_RESP
+          if [ "$DNS_OUTCOME" != 'true' ]; then
             echo "ERROR while creating DNS record"
             exit 1
           fi
