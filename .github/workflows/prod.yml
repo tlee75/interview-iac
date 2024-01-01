@@ -77,7 +77,7 @@ jobs:
                 --header 'Content-Type: application/json' \
                 --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
                 --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
-                "config_src": "cloudflare",
+                "config_src": "local",
                 "name": "${{ vars.SITE_URL }}",
                 "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
               TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
