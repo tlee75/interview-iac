@@ -91,6 +91,7 @@ jobs:
             echo ${CF_TUNNEL_ID}
           fi
       - name: Create Cloudflare DNS Records
+        continue-on-error: true
         run: |
           DNS_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/zones/${{ vars.CF_ZONE_ID }}/dns_records" \
             --header 'Content-Type: application/json' \
@@ -102,11 +103,16 @@ jobs:
             "type": "CNAME",
             "ttl": 3600}')
           DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
-          DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors')
-          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.success')
+          DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
+          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.success[]')
           if [ "$DNS_OUTCOME" != 'true' ]; then
-            echo "ERROR: while creating DNS record ${DNS_ERRORS}"
-            exit 1
+            ERROR_CODE=$(echo ${DNS_ERRORS} | jq -r '.[] | .code')
+            if [ "${ERROR_CODE} == 81053 ]; then
+              echo "WARN: Record already exists"
+            else
+              echo "ERROR: while creating DNS record ${DNS_ERRORS}"
+              exit 1
+            fi
           else
             echo "INFO: DNS Created successfully ${DNS_MESSAGES}"
           fi
