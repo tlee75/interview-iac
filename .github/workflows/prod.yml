@@ -54,6 +54,7 @@ jobs:
       - name: Create Cloudflare Tunnel
         id: create_tunnel
         run: |
+          set -x
           TUNNEL_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.SITE_RURL }}" \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
@@ -61,7 +62,7 @@ jobs:
           RESP_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
           RESP_ERRORS=$(echo ${TUNNEL_RESP} | jq -r '.errors')
           RESP_MESSAGES=$(echo ${TUNNEL_RESP} | jq -r '.messages')
-
+          echo ${TUNNEL_RESP}
           if [ "$RESP_OUTCOME" != 'true' ]; then
             echo "INFO: Tunnel does not exist, creating..."
             TUNNEL_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel" \
