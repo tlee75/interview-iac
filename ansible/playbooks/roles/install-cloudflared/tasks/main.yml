@@ -30,24 +30,27 @@
 - debug: msg="{{ remove_cloudflared.stdout_lines }}"
 
 - name: Update Cloudflare Tunnel Config
+  become: true
   ansible.builtin.template:
     src: config.yml.j2
     dest: '/root/.cloudflared/config.yml'
-    owner: '{{ ansible_user }}'
-    group: '{{ ansible_user }}'
+    owner: 'root'
+    group: 'root'
     mode: '0644'
     force: yes
 
 - name: Update Cloudflare Tunnel Creds
+  become: true
   ansible.builtin.template:
     src: creds.json.j2
     dest: '/root/.cloudflared/{{ CF_TUNNEL_ID }}.json'
-    owner: '{{ ansible_user }}'
-    group: '{{ ansible_user }}'
+    owner: 'root'
+    group: 'root'
     mode: '0644'
     force: yes
 
 - name: Configure Tunnel
+  become: true
   ansible.builtin.shell: sudo cloudflared service install
   register: configure_cloudflared
 - debug: msg="{{ configure_cloudflared.stdout_lines }}"
