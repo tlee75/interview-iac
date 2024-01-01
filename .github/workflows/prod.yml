@@ -107,7 +107,7 @@ jobs:
           DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.success[]')
           if [ "$DNS_OUTCOME" != 'true' ]; then
             ERROR_CODE=$(echo ${DNS_ERRORS} | jq -r '.[] | .code')
-            if [ "${ERROR_CODE} == 81053 ]; then
+            if [ "${ERROR_CODE}" == 81053 ]; then
               echo "WARN: Record already exists"
             else
               echo "ERROR: while creating DNS record ${DNS_ERRORS}"
