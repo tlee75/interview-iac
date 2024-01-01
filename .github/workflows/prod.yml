@@ -54,7 +54,7 @@ jobs:
       - name: Create Cloudflare Tunnel
         id: create_tunnel
         run: |
-          TUNNEL_RESP=$(curl -X GET --url https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.TUNNEL_NAME }} \
+          TUNNEL_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.TUNNEL_NAME }}" \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
             --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}')
