@@ -61,8 +61,6 @@ jobs:
           RESP_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
           RESP_ERRORS=$(echo ${TUNNEL_RESP} | jq -r '.errors')
           RESP_MESSAGES=$(echo ${TUNNEL_RESP} | jq -r '.messages')
-          CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
-          echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
 
           if [ "$RESP_OUTCOME" != 'true' ]; then
             echo "INFO: Tunnel does not exist, creating..."
@@ -86,7 +84,8 @@ jobs:
               echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
             fi
           else
-            echo "INFO: Tunnel already exists..."
+            echo "INFO: Tunnel already exists ${RESP_MESSAGES}"
+            CF_TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
             echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
           fi
       - name: Create Cloudflare DNS Records
