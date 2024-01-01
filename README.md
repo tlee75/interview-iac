@@ -2,8 +2,9 @@
 
 This repo stores the IaC for the Personal Site Repo  
 
-The IaC is split into separate stacks to isolate the OCI organizational resources which do not destroy quickly from the 
-computational/network resources for the website which will be brought up and down more frequently.  
+The IaC is split into separate stacks to isolate the deployment of OCI organizational resources (compartments, etc) which 
+are likely to be managed by a shared Organizational team, from the website resources which gives the software team freedom 
+to deploy and destroy as needed.  
 
 
 Begin by creating a new stack and configuring it with your OCI creds:
@@ -16,7 +17,7 @@ pulumi config set oci:region "us-ashburn-1"
 cat "~/.oci/oci_api_key.pem" | pulumi config set oci:privateKey --secret
 ```
 
-Next create the compartment to be used for the compute/network infrastructure and set add it to your pulumi config:  
+Next create an OCI compartment to be used for the compute/network infrastructure and set add it to your pulumi config:  
 `pulumi config set --secret compartment_ocid "ocid1.compartment.oc1..<unique_ID>`
 
 Adjust some of the stack configs, such as:  
