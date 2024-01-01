@@ -90,33 +90,17 @@ jobs:
             echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
             echo ${CF_TUNNEL_ID}
           fi
-      - name: Create Cloudflare DNS Records
-        continue-on-error: true
-        run: |
-          set -x
-          DNS_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/zones/${{ vars.CF_ZONE_ID }}/dns_records" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
-            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
-            "content": "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com",
-            "name": "${{ vars.SSH_RECORD_NAME }}",
-            "proxied": true,
-            "type": "CNAME",
-            "ttl": 3600}')
-          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
-          DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
-          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.messages[]')
-          if [ "$DNS_OUTCOME" != 'true' ]; then
-            ERROR_CODE=$(echo ${DNS_ERRORS} | jq -r '.[] | .code')
-            if [ "${ERROR_CODE}" == 81053 ]; then
-              echo "WARN: Record already exists"
-            else
-              echo "ERROR: while creating DNS record ${DNS_ERRORS}"
-              exit 1
-            fi
-          else
-            echo "INFO: DNS Created successfully ${DNS_MESSAGES}"
-          fi
+      - name: Create SSH DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "ssh.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
     outputs:
       TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
 
