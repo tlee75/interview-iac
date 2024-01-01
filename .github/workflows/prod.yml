@@ -90,7 +90,7 @@ jobs:
             exit 1
           fi
     outputs:
-      TUNNEL_TOKEN: {{ steps.create_tunnel.outputs.TUNNEL_TOKEN }}
+      TUNNEL_TOKEN: ${{ steps.create_tunnel.outputs.TUNNEL_TOKEN }}
 
   configure:
     name: Configure Instance
