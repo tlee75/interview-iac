@@ -102,7 +102,7 @@ jobs:
           ROUTE_CONFIG=$(jq -cr --arg HOSTNAME "ssh.${{ vars.SITE_URL }}" --arg SERVICE "ssh://localhost:22" '.config.ingress +=[{hostname:$HOSTNAME,service:$SERVICE}]')
           ROUTE_CONFIG=$(jq -cr --arg HOSTNAME "grafana.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:3000" '.config.ingress +=[{hostname:$HOSTNAME,service:$SERVICE}]')
           ROUTE_CONFIG=$(jq -cr --arg HOSTNAME "prometheus.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:9090" '.config.ingress +=[{hostname:$HOSTNAME,service:$SERVICE}]')
-          ROUTE_CONFIG=$(jq -cr --arg SERVICE "http_status:404" '.config.ingress +=[{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(jq -cr --arg SERVICE "http_status:404" '.config.ingress +=[{service:$SERVICE}]')
           CONFIG_RESP=$(curl -X PUT --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel/${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}/configurations" \
                       --header 'Content-Type: application/json' \
                       --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
