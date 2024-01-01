@@ -1,0 +1,41 @@
+---
+- name: Create directory to put files into
+  ansible.builtin.file:
+    path: '/home/{{ ansible_user }}/.cloudflared/'
+    state: directory
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: '0755'
+
+- name: Install Cloudflared
+  ansible.builtin.shell: curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared.deb
+  register: install_cloudflared
+- debug: msg="{{ install_cloudflared.stdout_lines }}"
+
+- name: Remove Tunnel
+  ansible.builtin.shell: sudo cloudflared service uninstall
+  register: remove_cloudflared
+- debug: msg="{{ remove_cloudflared.stdout_lines }}"
+
+- name: Update Cloudflare Tunnel Config
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: '/home/{{ansible_user}}/.cloudflared/config.yml'
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: '0644'
+    force: yes
+
+- name: Update Cloudflare Tunnel Creds
+  ansible.builtin.template:
+    src: creds.json.j2
+    dest: '/home/{{ansible_user}}/.cloudflared/{{ TUNNEL_ID }}.json'
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: '0644'
+    force: yes
+
+- name: Configure Tunnel
+  ansible.builtin.shell: sudo cloudflared service install
+  register: configure_cloudflared
+- debug: msg="{{ configure_cloudflared.stdout_lines }}"

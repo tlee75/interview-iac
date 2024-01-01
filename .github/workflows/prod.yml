@@ -54,7 +54,7 @@ jobs:
       - name: Create Cloudflare Tunnel
         id: create_tunnel
         run: |
-          TUNNEL_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.TUNNEL_NAME }}" \
+          TUNNEL_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.SITE_RURL }}" \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
             --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}')
@@ -70,7 +70,7 @@ jobs:
               --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
               --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
               "config_src": "cloudflare",
-              "name": "${{ vars.TUNNEL_NAME }}",
+              "name": "${{ vars.SITE_URL }}",
               "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
             echo "${TUNNEL_RESP}"
             TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
@@ -91,6 +91,7 @@ jobs:
             --arg TS "${{ secrets.CF_TUNNEL_SECRET }}" \
             '{a:$AID,t:$TID,s:$TS} | @base64')
 
+            echo "CF_TUNNEL_ID=${CF_TUNNEL_ID}" >> $GITHUB_OUTPUT
             echo "TUNNEL_TOKEN=${ENCODED_JSON_STRING}" >> $GITHUB_OUTPUT
           fi
       - name: Create Cloudflare DNS Records
@@ -101,7 +102,7 @@ jobs:
             --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
             "content": "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com",
             "name": "${{ vars.SSH_RECORD_NAME }}",
-            "proxied": false,
+            "proxied": true,
             "type": "CNAME",
             "ttl": 3600}')
           echo $DNS_RESP
@@ -111,6 +112,7 @@ jobs:
             exit 1
           fi
     outputs:
+      TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
       TUNNEL_TOKEN: ${{ steps.create_tunnel.outputs.TUNNEL_TOKEN }}
 
   configure:
@@ -141,7 +143,8 @@ jobs:
             --user ${{ secrets.SSH_USERNAME }} \
             --key-file ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }} \
             --verbose \
-            --extra-vars "CF_TUNNEL_JSON_ENCODED=${{ needs.records.outputs.TUNNEL_TOKEN }}"
+            --extra-vars "CF_TUNNEL_JSON_ENCODED=${{ needs.records.outputs.TUNNEL_TOKEN }}" \
+            --extra-vars "TUNNEL_ID=${{ needs.records.outputs.TUNNEL_ID }}
 
   destroy:
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}

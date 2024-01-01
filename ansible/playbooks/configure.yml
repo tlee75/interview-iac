@@ -1,21 +1,8 @@
 ---
-- name: Configure Personal Site Instance
+- name: Deploy Personal Site
   gather_facts: no
   hosts: all
   vars:
     ansible_host_key_checking: false
-  tasks:
-    - name: Install Cloudflared
-      ansible.builtin.shell: curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i cloudflared.deb
-      register: install_cloudflared
-    - debug: msg="{{ install_cloudflared.stdout_lines }}"
-
-    - name: Remove Tunnel
-      ansible.builtin.shell: sudo cloudflared service uninstall
-      register: remove_cloudflared
-    - debug: msg="{{ remove_cloudflared.stdout_lines }}"
-
-    - name: Configure Tunnel
-      ansible.builtin.shell: sudo cloudflared service install {{ CF_TUNNEL_JSON_ENCODED }}
-      register: configure_cloudflared
-    - debug: msg="{{ configure_cloudflared.stdout_lines }}"
+  roles:
+    - install-cloudflared
