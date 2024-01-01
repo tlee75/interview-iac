@@ -1,5 +1,6 @@
 ---
 - name: Create directory to put files into
+  become: true
   ansible.builtin.file:
     path: '/root/.cloudflared/'
     state: directory
