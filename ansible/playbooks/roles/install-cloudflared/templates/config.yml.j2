@@ -2,14 +2,14 @@ tunnel: {{ CF_TUNNEL_ID }}
 credentials-file: /home/{{ ansible_user }}/.cloudflared/{{ CF_TUNNEL_ID }}.json
 
 ingress:
-  - hostname: {{ site_url }}
+  - hostname: {{ SITE_URL }}
     service: http://localhost:8000
-  - hostname: www.{{ site_url }}
+  - hostname: www.{{ SITE_URL }}
     service: http://localhost:8000
-  - hostname: grafana.{{ site_url }}
+  - hostname: grafana.{{ SITE_URL }}
     service: http://localhost:3000
-  - hostname: prometheus.{{ site_url }}
+  - hostname: prometheus.{{ SITE_URL }}
     service: http://localhost:9090
-  - hostname: ssh.{{ site_url }}
+  - hostname: ssh.{{ SITE_URL }}
     service: ssh://localhost:22
   - service: http_status:404
