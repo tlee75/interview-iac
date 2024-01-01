@@ -48,6 +48,8 @@ Required Repository Secrets:
 `CF_API_KEY`  Cloudflare Account's Global API Key  
 `CF_API_USER`  Cloudflare Account's Email Address  
 
+Required Repository Variables:  
+`CF_ACCOUNT_ID` Cloudflare Account ID  
 
 # To run Instance Configuration playbook locally:
 
