@@ -1,32 +1,32 @@
 ---
-#- name: Create directory to put files into
-#  become: true
-#  ansible.builtin.file:
-#    path: '/etc/cloudflared/'
-#    state: directory
-#    owner: 'root'
-#    group: 'root'
-#    mode: '0755'
-#
-#- name: Setup Cloudflare GPG Key
-#  ansible.builtin.shell: sudo mkdir -p --mode=0755 /usr/share/keyrings && curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
-#  register: setup_gpg
-#- debug: msg="{{ setup_gpg.stdout_lines }}"
-#
-#- name: Setup Cloudflare APT Repo
-#  ansible.builtin.shell: echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
-#  register: setup_apt
-#- debug: msg="{{ setup_apt.stdout_lines }}"
-#
-#- name: Install jq
-#  ansible.builtin.shell: sudo apt install jq -y
-#  register: setup_jq
-#- debug: msg="{{ setup_jq.stdout_lines }}"
-#
-#- name: Install Cloudflared
-#  ansible.builtin.shell: sudo apt-get update && sudo apt-get install cloudflared
-#  register: install_cloudflared
-#- debug: msg="{{ install_cloudflared.stdout_lines }}"
+- name: Create directory to put files into
+  become: true
+  ansible.builtin.file:
+    path: '/etc/cloudflared/'
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: Setup Cloudflare GPG Key
+  ansible.builtin.shell: sudo mkdir -p --mode=0755 /usr/share/keyrings && curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+  register: setup_gpg
+- debug: msg="{{ setup_gpg.stdout_lines }}"
+
+- name: Setup Cloudflare APT Repo
+  ansible.builtin.shell: echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+  register: setup_apt
+- debug: msg="{{ setup_apt.stdout_lines }}"
+
+- name: Install jq
+  ansible.builtin.shell: sudo apt install jq -y
+  register: setup_jq
+- debug: msg="{{ setup_jq.stdout_lines }}"
+
+- name: Install Cloudflared
+  ansible.builtin.shell: sudo apt-get update && sudo apt-get install cloudflared
+  register: install_cloudflared
+- debug: msg="{{ install_cloudflared.stdout_lines }}"
 
 - name: Remove Tunnel
   ignore_errors: true
