@@ -127,6 +127,50 @@ jobs:
           RECORD_NAME: "ssh.${{ vars.SITE_URL }}"
           RECORD_TYPE: CNAME
           PROXIED: true
+      - name: Create WWW DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "www.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Apex DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Grafana DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "grafana.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Prometheus DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "prometheus.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
     outputs:
       CF_TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
 
