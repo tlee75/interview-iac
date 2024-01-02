@@ -97,7 +97,6 @@ jobs:
           fi
       - name: Update Tunnel Rules
         run: |
-          set -x
           ROUTE_CONFIG='{"config": {"ingress": []}}'
           ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:8000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
           ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "www.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:8000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
@@ -105,7 +104,6 @@ jobs:
           ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "grafana.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:3000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
           ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "prometheus.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:9090" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
           ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg SERVICE "http_status:404" '.config.ingress += [{service:$SERVICE}]')
-          echo ${ROUTE_CONFIG}
           CONFIG_RESP=$(curl -X PUT --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel/${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}/configurations" \
                       --header 'Content-Type: application/json' \
                       --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
@@ -113,7 +111,6 @@ jobs:
           CONFIG_OUTCOME=$(echo ${CONFIG_RESP} | jq -r '.success')
           RESP_ERRORS=$(echo ${CONFIG_RESP} | jq -r '.errors')
           RESP_MESSAGES=$(echo ${CONFIG_RESP} | jq -r '.messages')
-          echo ${CONFIG_RESP}
           if [ "$CONFIG_OUTCOME" != 'true' ]; then
             echo "ERROR: while configuring tunnel rules ${RESP_ERRORS}"
             exit 1
