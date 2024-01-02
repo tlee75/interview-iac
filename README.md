@@ -64,5 +64,8 @@ ansible-playbook ./ansible/playbooks/configure.yml \
 --user <SSH_USERNAME> \
 --key-file ~/.ssh/<SSH_PRIVATE_KEY_NAME> \
 --verbose \
---extra-vars "CF_TUNNEL_JSON_ENCODED=<CF_TUNNEL_JSON_ENCODED>"
+--extra-vars "CF_ACCOUNT_ID=<cloudflare_account_id> \
+--extra-vars "CF_TUNNEL_ID=<cloudflare_tunnel_id> \
+--extra-vars "CF_TUNNEL_SECRET=<self_generated_base64_secret>" \
+--extra-vars "SITE_URL=<site_url>"
 ```
