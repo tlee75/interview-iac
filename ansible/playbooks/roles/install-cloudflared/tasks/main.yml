@@ -28,6 +28,29 @@
   register: install_cloudflared
 - debug: msg="{{ install_cloudflared.stdout_lines }}"
 
+- name: Setup Docker Prereqs
+  ansible.builtin.shell: sudo apt-get install ca-certificates curl gnupg
+  register: setup_docker_prereqs
+- debug: msg="{{ setup_docker_prereqs.stdout_lines }}"
+
+- name: Setup Docker GPG
+  become: true
+  ansible.builtin.shell: sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  register: setup_docker_gpg
+- debug: msg="{{ setup_docker_gpg.stdout_lines }}"
+
+- name: Setup Docker APT Repo
+  become: true
+  ansible.builtin.shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  register: setup_docker_repo
+- debug: msg="{{ setup_docker_repo.stdout_lines }}"
+
+- name: Install Docker
+  ignore_errors: true
+  ansible.builtin.shell: sudo apt update && sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  register: install_docker
+- debug: msg="{{ install_docker.stdout_lines }}"
+
 - name: Remove Tunnel
   ignore_errors: true
   ansible.builtin.shell: sudo cloudflared service uninstall
