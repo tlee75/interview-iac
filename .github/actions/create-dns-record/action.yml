@@ -80,7 +80,7 @@ runs:
             echo "INFO: DNS updated successfully ${DNS_MESSAGES}"
           fi
         else
-          echo "Create DNS record
+          echo "Creating DNS record"
           DNS_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/zones/${{ inputs.CF_ZONE_ID }}/dns_records" \
             --header 'Content-Type: application/json' \
             --header 'X-Auth-Email: ${{ inputs.CF_API_USER }}' \
