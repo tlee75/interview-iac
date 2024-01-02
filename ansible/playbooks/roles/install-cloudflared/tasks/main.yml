@@ -35,7 +35,7 @@
 
 - name: Setup Docker GPG
   become: true
-  ansible.builtin.shell: sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  ansible.builtin.shell: sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg
   register: setup_docker_gpg
 - debug: msg="{{ setup_docker_gpg.stdout_lines }}"
 

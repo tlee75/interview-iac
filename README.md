@@ -54,6 +54,21 @@ Required Repository Secrets:
 Required Repository Variables:  
 `CF_ACCOUNT_ID` Cloudflare Account ID  
 
+# Cloudflare
+
+Create/login to your [Cloudflare dashboard](https://dash.cloudflare.com/) and ensure the domain you want to use for this
+is activated.
+
+Create a Service Auth token for the Personal Site deployments that will be used by the Github runner. Give it a name which 
+represents the application it will be used by, such as "Personal Site" or something to that effect. This will be used in 
+the `pesonal-site` repo.  
+
+Next, it is very important that you create a Cloudflare Application that will protect the `node1-ssh` endpoint with
+the Service Auth Token you just created. Ensure the Application covers ONLY the SSH endpoint and not the `www` or root
+domain itself. Ensure the Policy uses a "Service Auth" action and includes your Service Auth Token in the rules selector.
+
+Lastly, create a DNS record which points at the instance's private IP, so you have an FQDN for the hostname.
+
 # To run Instance Configuration playbook locally:
 
 Ensure the public IP address has a trailing comma:  
