@@ -25,26 +25,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-#      - name: 'Add .ssh directory'
-#        run: |
-#          mkdir -p ~/.ssh
-#          chmod 0700 ~/.ssh
-#      - name: 'Copy public key'
-#        run: |
-#          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
-#          chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
-#      - name: Update Stack
-#        id: pulumi
-#        uses: pulumi/actions@v4.5.0
-#        with:
-#          command: update
-#          stack-name: personal-site-iac
-#        env:
-#          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-#          TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
+      - name: 'Add .ssh directory'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+      - name: 'Copy public key'
+        run: |
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+      - name: Update Stack
+        id: pulumi
+        uses: pulumi/actions@v4.5.0
+        with:
+          command: update
+          stack-name: personal-site-iac
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
     outputs:
-      INSTANCE_PUBIP: 129.146.184.37
-#      INSTANCE_PUBIP: ${{ steps.pulumi.outputs.instance_pubip }}
+      INSTANCE_PUBIP: ${{ steps.pulumi.outputs.instance_pubip }}
 
   records:
     name: Create Tunnel and DNS
