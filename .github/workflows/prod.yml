@@ -1,20 +1,230 @@
 name: Prod
+
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
+
   workflow_dispatch:
+    inputs:
+      ACTION:
+        description: "Select Action"
+        type: choice
+        default: UPDATE
+        options:
+        - UPDATE
+        - DESTROY
 
 jobs:
-  deploy-prod:
-    name: Deploy Prod
+  update:
+    if: ${{ (github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'UPDATE') }}
+    name: Update
     environment: prod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: pulumi/actions@v4.5.0
+      - name: 'Add .ssh directory'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+      - name: 'Copy public key'
+        run: |
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+      - name: Update Stack
+        id: pulumi
+        uses: pulumi/actions@v4.5.0
         with:
-          command: preview
-          stack-name: org-name/stack-name
+          command: update
+          stack-name: personal-site-iac
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}
+    outputs:
+      INSTANCE_PUBIP: ${{ steps.pulumi.outputs.instance_pubip }}
+
+  records:
+    name: Create Tunnel and DNS
+    needs: [ update ]
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create Cloudflare Tunnel
+        id: create_tunnel
+        run: |
+          TUNNEL_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel?is_deleted=false&name=${{ vars.SITE_URL }}" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+            --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}')
+          RESP_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+          RESP_ERRORS=$(echo ${TUNNEL_RESP} | jq -r '.errors')
+          RESP_MESSAGES=$(echo ${TUNNEL_RESP} | jq -r '.messages')
+          if [ "$RESP_OUTCOME" != 'true' ]; then
+            echo "ERROR: API request failed ${RESP_ERRORS} ${RESP_MESSAGES}"
+            exit 1
+          else
+            TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result[].id')
+            if [ -n "${TUNNEL_ID}" ]; then
+              echo "INFO: Tunnel already exists ${RESP_MESSAGES}"
+              echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+            else
+              echo "INFO: Tunnel does not exist, creating..."
+              TUNNEL_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel" \
+                --header 'Content-Type: application/json' \
+                --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+                --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data '{
+                "config_src": "cloudflare",
+                "name": "${{ vars.SITE_URL }}",
+                "tunnel_secret": "${{ secrets.CF_TUNNEL_SECRET }}"}')
+              TUNNEL_OUTCOME=$(echo ${TUNNEL_RESP} | jq -r '.success')
+              RESP_ERRORS=$(echo ${TUNNEL_RESP} | jq -r '.errors')
+              RESP_MESSAGES=$(echo ${TUNNEL_RESP} | jq -r '.messages')
+              if [ "$TUNNEL_OUTCOME" != 'true' ]; then
+                echo "ERROR: while creating DNS record ${RESP_ERRORS}"
+                exit 1
+              else
+                echo "INFO: Tunnel created successfully ${RESP_MESSAGES}"
+                TUNNEL_ID=$(echo ${TUNNEL_RESP} | jq -r '.result.id')
+                echo "CF_TUNNEL_ID=${TUNNEL_ID}" >> $GITHUB_OUTPUT
+              fi
+            fi
+            echo "INFO: Tunnel ID ${TUNNEL_ID}"
+          fi
+      - name: Update Tunnel Rules
+        run: |
+          ROUTE_CONFIG='{"config": {"ingress": []}}'
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:8000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "www.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:8000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "ssh.${{ vars.SITE_URL }}" --arg SERVICE "ssh://localhost:22" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "grafana.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:3000" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg HOSTNAME "prometheus.${{ vars.SITE_URL }}" --arg SERVICE "http://localhost:9090" '.config.ingress += [{hostname:$HOSTNAME,service:$SERVICE}]')
+          ROUTE_CONFIG=$(echo $ROUTE_CONFIG | jq -cr --arg SERVICE "http_status:404" '.config.ingress += [{service:$SERVICE}]')
+          CONFIG_RESP=$(curl -X PUT --url "https://api.cloudflare.com/client/v4/accounts/${{ vars.CF_ACCOUNT_ID }}/cfd_tunnel/${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}/configurations" \
+                      --header 'Content-Type: application/json' \
+                      --header 'X-Auth-Email: ${{ secrets.CF_API_USER }}' \
+                      --header 'X-Auth-Key: ${{ secrets.CF_API_KEY }}' --data "${ROUTE_CONFIG}")
+          CONFIG_OUTCOME=$(echo ${CONFIG_RESP} | jq -r '.success')
+          RESP_ERRORS=$(echo ${CONFIG_RESP} | jq -r '.errors')
+          RESP_MESSAGES=$(echo ${CONFIG_RESP} | jq -r '.messages')
+          if [ "$CONFIG_OUTCOME" != 'true' ]; then
+            echo "ERROR: while configuring tunnel rules ${RESP_ERRORS}"
+            exit 1
+          else
+            echo "INFO: Tunnel configured successfully ${RESP_MESSAGES}"
+          fi
+      - name: Create SSH DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "ssh.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create WWW DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "www.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Apex DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Grafana DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "grafana.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+      - name: Create Prometheus DNS Record
+        uses: ./.github/actions/create-dns-record
+        with:
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_USER: ${{ secrets.CF_API_USER }}
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          CF_ZONE_ID: ${{ vars.CF_ZONE_ID }}
+          RECORD_VALUE: "${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}.cfargotunnel.com"
+          RECORD_NAME: "prometheus.${{ vars.SITE_URL }}"
+          RECORD_TYPE: CNAME
+          PROXIED: true
+    outputs:
+      CF_TUNNEL_ID: ${{ steps.create_tunnel.outputs.CF_TUNNEL_ID }}
+
+  configure:
+    name: Configure Instance
+    needs: [ update, records ]
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Add .ssh directory'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+      - name: 'Copy private key'
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }}
+      - name: Install Ansible
+        run: |
+          sudo apt update -y
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository --yes --update ppa:ansible/ansible
+          sudo apt install ansible -y
+      - name: Deploy
+        run: |
+          ansible-playbook ./ansible/playbooks/configure.yml \
+            --inventory ${{ needs.update.outputs.INSTANCE_PUBIP }}, \
+            --user ${{ secrets.SSH_USERNAME }} \
+            --key-file ~/.ssh/${{ vars.SSH_PRIVATE_KEY_NAME }} \
+            --verbose \
+            --extra-vars "CF_ACCOUNT_ID=${{ vars.CF_ACCOUNT_ID }} \
+            --extra-vars "CF_TUNNEL_ID=${{ needs.records.outputs.CF_TUNNEL_ID }} \
+            --extra-vars "CF_TUNNEL_SECRET=${{ secrets.CF_TUNNEL_SECRET }}" \
+            --extra-vars "SITE_URL=${{ vars.SITE_URL }}"
+
+  destroy:
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.ACTION == 'DESTROY') }}
+    name: Destroy
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Create SSH Public Key file'
+        run: |
+          mkdir -p ~/.ssh
+          chmod 0700 ~/.ssh
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+          chmod 0400 ~/.ssh/${{ vars.SSH_PUBLIC_KEY_NAME }}
+      - name: Destroy Stack
+        uses: pulumi/actions@v4.5.0
+        with:
+          command: destroy
+          stack-name: personal-site-iac
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          TF_VAR_compartment_ocid: ${{ inputs.TF_VAR_COMPARTMENT_OCID }}

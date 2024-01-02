@@ -1,0 +1,8 @@
+---
+- name: Deploy Personal Site
+  gather_facts: no
+  hosts: all
+  vars:
+    ansible_host_key_checking: false
+  roles:
+    - install-cloudflared

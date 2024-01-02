@@ -1,0 +1,99 @@
+name: Create DNS Record
+description: Creates a DNS record through Cloudflare API
+
+inputs:
+  CF_ACCOUNT_ID:
+    description: "Cloudflare Account ID"
+    required: true
+  CF_API_USER:
+    description: "Cloudflare API User"
+    required: true
+  CF_API_KEY:
+    description: "Cloudflare API Key"
+    required: true
+  CF_ZONE_ID:
+    description: "Cloudflare Zone ID"
+    required: true
+  RECORD_VALUE:
+    description: "DNS record value"
+    required: true
+  RECORD_NAME:
+    description: "DNS Record Name"
+    required: true
+  RECORD_TYPE:
+    description: "DNS Record Type"
+    required: true
+  PROXIED:
+    description: "DNS Record will by Proxied through Cloudflare"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check for Existing Record
+      id: check_record
+      shell: bash
+      run: |
+        DNS_RESP=$(curl -X GET --url "https://api.cloudflare.com/client/v4/zones/${{ inputs.CF_ZONE_ID }}/dns_records?name=${{ inputs.RECORD_NAME }}" \
+          --header 'Content-Type: application/json' \
+          --header 'X-Auth-Email: ${{ inputs.CF_API_USER }}' \
+          --header 'X-Auth-Key: ${{ inputs.CF_API_KEY }}')
+        DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
+        DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
+        DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.messages[]')
+        RECORD_ID=$(echo $DNS_RESP | jq -r '.result[].id')
+        echo ${RECORD_ID}
+        if [ "$DNS_OUTCOME" != 'true' ]; then
+          echo "ERROR: Fetching DNS record failed ${DNS_ERRORS} ${DNS_MESSAGES}"
+        else
+          if [ -n "${RECORD_ID}" ]; then
+            echo "INFO: DNS Record Exists"
+            echo "RECORD_ID=$RECORD_ID" >> $GITHUB_OUTPUT
+          else
+            echo "INFO: DNS Record does not exist"
+          fi
+        fi
+    - name: Create Cloudflare DNS Records
+      shell: bash
+      run: |
+        if [ -n "${{ steps.check_record.outputs.RECORD_ID }}" ]; then
+          echo "Updating DNS record"
+          DNS_RESP=$(curl -X PUT --url "https://api.cloudflare.com/client/v4/zones/${{ inputs.CF_ZONE_ID }}/dns_records/${{ steps.check_record.outputs.RECORD_ID }}" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Auth-Email: ${{ inputs.CF_API_USER }}' \
+            --header 'X-Auth-Key: ${{ inputs.CF_API_KEY }}' --data '{
+            "content": "${{ inputs.RECORD_VALUE }}",
+            "name": "${{ inputs.RECORD_NAME }}",
+            "proxied": true,
+            "type": "${{ inputs.RECORD_TYPE }}",
+            "ttl": 3600}')
+          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
+          DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
+          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.messages[]')
+          if [ "$DNS_OUTCOME" != 'true' ]; then
+            echo "ERROR: while creating DNS record ${DNS_ERRORS}"
+            exit 1
+          else
+            echo "INFO: DNS updated successfully ${DNS_MESSAGES}"
+          fi
+        else
+          echo "Creating DNS record"
+          DNS_RESP=$(curl -X POST --url "https://api.cloudflare.com/client/v4/zones/${{ inputs.CF_ZONE_ID }}/dns_records" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Auth-Email: ${{ inputs.CF_API_USER }}' \
+            --header 'X-Auth-Key: ${{ inputs.CF_API_KEY }}' --data '{
+            "content": "${{ inputs.RECORD_VALUE }}",
+            "name": "${{ inputs.RECORD_NAME }}",
+            "proxied": true,
+            "type": "${{ inputs.RECORD_TYPE }}",
+            "ttl": 3600}')
+          DNS_OUTCOME=$(echo $DNS_RESP | jq -r '.success')
+          DNS_ERRORS=$(echo $DNS_RESP | jq -r '.errors[]')
+          DNS_MESSAGES=$(echo $DNS_RESP | jq -r '.messages[]')
+          if [ "$DNS_OUTCOME" != 'true' ]; then
+            echo "ERROR: while creating DNS record ${DNS_ERRORS}"
+            exit 1
+          else
+            echo "INFO: DNS Created successfully ${DNS_MESSAGES}"
+          fi
+        fi
