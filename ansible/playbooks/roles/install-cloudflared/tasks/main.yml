@@ -50,6 +50,11 @@
   register: install_docker
 - debug: msg="{{ install_docker.stdout_lines }}"
 
+- name: Add user to Docker group
+  ansible.builtin.shell: sudo gpasswd -a {{ ansible_user }} docker && newgrp docker
+  register: add_docker_group
+- debug: msg="{{ add_docker_group.stdout_lines }}"
+
 - name: Remove Tunnel
   ignore_errors: true
   ansible.builtin.shell: sudo cloudflared service uninstall
